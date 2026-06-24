@@ -1,0 +1,52 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# E-Auction — Docker Compose (Simplified)
+#
+# Services:
+#   api       — FastAPI backend (http://localhost:8000)
+#   redis     — Redis 7
+#
+# Usage:
+#   docker compose up --build          Start all services
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── Redis ───────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: eauction-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ── FastAPI Backend ─────────────────────────────────────────────────────────
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+      target: production
+    container_name: eauction-api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: sqlite+aiosqlite:////app/eauction.db
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET_KEY: local-dev-secret-key
+    volumes:
+      - ./apps/api:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      redis:
+        condition: service_healthy
+
+volumes:
+  redis_data:
+    driver: local

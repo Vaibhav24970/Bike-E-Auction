@@ -1,0 +1,26 @@
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+select = ["E", "F", "I", "N", "UP", "B", "C4", "SIM"]
+ignore = ["E501", "B008"]  # B008: allow FastAPI Depends() in defaults
+
+[tool.ruff.isort]
+known-first-party = ["app"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "--cov=app --cov-report=term-missing --cov-report=xml -v"
+filterwarnings = ["ignore::DeprecationWarning"]
+env = [
+    "ENVIRONMENT=test",
+    "DATABASE_URL=postgresql+asyncpg://eauction:eauction_pass@localhost:5432/eauction_db",
+    "REDIS_URL=redis://localhost:6379/0",
+    "JWT_SECRET_KEY=test-secret-key-that-is-at-least-32-characters-long",
+    "JWT_REFRESH_SECRET_KEY=test-refresh-secret-at-least-32-characters-long-x",
+]
+
+[tool.coverage.run]
+omit = ["tests/*", "alembic/*", "scripts/*"]
